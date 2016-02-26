@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.zw.fms.dao.FileMapper" >
+
+  <resultMap id="BaseResultMap" type="com.zw.fms.model.File" >
+    <id column="id" property="id" />
+    <result column="applyId" property="applyId" />
+    <result column="subId" property="subId" />
+    <result column="uploaderId" property="uploaderId" />
+    <result column="category" property="category" />
+    <result column="fileName" property="fileName" />
+    <result column="type" property="type" />
+    <result column="size" property="size" />
+    <result column="url" property="url" />
+    <result column="status" property="status" />
+    <result column="timestamp" property="timestamp" javaType="java.util.Date" />
+  </resultMap>
+
+  <cache 
+    eviction="FIFO"
+    flushInterval="60000"
+    size="1024"
+    readOnly="true"
+    />
+
+  <select id="listFiles" resultMap="BaseResultMap">
+    SELECT * FROM File
+  </select>
+  <select id="listFilesByMap" parameterType="java.util.Map" resultMap="BaseResultMap">
+    SELECT * FROM File a left join Approval b on a.applyId = b.applyId where 1=1
+    <if test="name != null">
+        <if test="name != ''">
+            and b.name like concat('%',trim(#{name,jdbcType=VARCHAR}),'%')
+        </if>
+    </if>
+    order by a.timestamp desc
+    <if test="start != null and size != null">
+        limit #{start,jdbcType=INTEGER}, #{size,jdbcType=INTEGER}
+    </if>
+  </select>
+  <select id="countFilesByMap" parameterType="java.util.Map" resultType="java.lang.Long">
+    SELECT count(*) FROM File a left join Approval b on a.applyId = b.applyId where 1=1
+    <if test="name != null">
+        <if test="name != ''">
+            and b.name like concat('%',trim(#{name,jdbcType=VARCHAR}),'%')
+        </if>
+    </if>
+  </select>
+  <select id="listFilesByApplyId" resultMap="BaseResultMap">
+    SELECT * FROM File where applyId = #{applyId} order by timestamp asc
+  </select>
+  <select id="listFilesByApplyIdAndStatus" resultMap="BaseResultMap">
+    SELECT * FROM File where applyId = #{applyId} and status = #{status} order by timestamp asc
+  </select>
+  <select id="listFilesByApplyIdAndNotStatus" resultMap="BaseResultMap">
+    SELECT * FROM File where applyId = #{applyId} and status != #{status} order by timestamp asc
+  </select>
+  <select id="listFilesByApplyIdAndCategoryAndNotStatus" resultMap="BaseResultMap">
+    SELECT * FROM File where applyId = #{applyId} and category = #{category} and status != #{status} order by timestamp asc
+  </select>
+  <select id="listFilesByApplyIdAndCategoryAndUploaderIdAndNotStatus" resultMap="BaseResultMap">
+    SELECT * FROM File 
+      where applyId = #{applyId} and category = #{category} and uploaderId = #{uploaderId} and status != #{status}
+      order by timestamp asc
+  </select>
+  <select id="getFile" resultMap="BaseResultMap">
+    SELECT * FROM File WHERE id = #{id}
+  </select>
+  <select id="getFileByApplyIdAndFileName" resultMap="BaseResultMap">
+    SELECT * FROM File WHERE applyId = #{applyId} and fileName = #{fileName}
+  </select>
+  
+  <update id="updateFile" parameterType="com.zw.fms.model.File">
+    UPDATE File SET applyId = #{applyId}, subId = #{subId}, uploaderId = #{uploaderId}, category = #{category}, fileName = #{fileName}, type = #{type}, size = #{size}, url = #{url}, status = #{status}, timestamp = #{timestamp} WHERE id = #{id}
+  </update>
+  <update id="updateFileTimestamp">
+    UPDATE File SET timestamp = #{timestamp} WHERE id = #{id}
+  </update>
+  <update id="updateFileStatusByApplyId">
+    UPDATE File SET status = #{status} WHERE applyId = #{applyId}
+  </update>
+  <update id="updateFileStatusByApplyIdAndFileName">
+    UPDATE File SET status = #{status} WHERE applyId = #{applyId} and fileName = #{fileName}
+  </update>
+  <update id="updateFileStatusByApplyIdFromTo">
+    UPDATE File SET status = #{toStatus} WHERE applyId = #{applyId} and status = #{fromStatus}
+  </update>
+  
+  <insert id="insertFile" parameterType="com.zw.fms.model.File">
+    INSERT INTO File (id, applyId, subId, uploaderId, category, fileName, type, size, url, status, timestamp) VALUES (null, #{applyId}, #{subId}, #{uploaderId}, #{category}, #{fileName}, #{type}, #{size}, #{url}, #{status}, #{timestamp})
+  </insert>
+
+  <delete id="deleteFileById">
+    DELETE FROM File WHERE id = #{id}
+  </delete>
+  <delete id="deleteFileByApplyId">
+    DELETE FROM File WHERE applyId = #{applyId}
+  </delete>
+  <delete id="deleteFileByApplyIdAndStatus">
+    DELETE FROM File WHERE applyId = #{applyId} and status = #{status}
+  </delete>
+  
+  <delete id="deleteAllFiles">
+    DELETE FROM File
+  </delete>
+  
+</mapper>
